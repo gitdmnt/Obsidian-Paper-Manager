@@ -13,11 +13,15 @@ export default class PaperManagerPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.addRibbonIcon("dice", "Add new paper", (evt: MouseEvent) => {
-			new AddNewPaperModal(this.app, this.settings, (result) =>
-				createPaperPage(this.app, result)
-			).open();
-		});
+		this.addRibbonIcon(
+			"file-plus-2",
+			"Add new paper",
+			(evt: MouseEvent) => {
+				new AddNewPaperModal(this.app, this.settings, (result) =>
+					createPaperPage(this.app, result)
+				).open();
+			}
+		);
 		this.addSettingTab(new SettingTab(this.app, this));
 	}
 

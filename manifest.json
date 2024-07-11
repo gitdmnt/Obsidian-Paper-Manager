@@ -1,12 +1,11 @@
 {
-  "id": "paper-manager",
-  "name": "Paper Manager",
-  "version": "1.0.0",
-  "minAppVersion": "0.15.0",
-  "description": "Demonstrates some of the capabilities of the Obsidian API.",
-  "author": "uda",
-  "authorUrl": "https://gitdmnt.github.io/",
-  "fundingUrl": "https://obsidian.md/pricing",
-  "isDesktopOnly": false
+	"id": "paper-manager",
+	"name": "Paper Manager",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Research management plugin for Obisidian",
+	"author": "uda",
+	"authorUrl": "https://gitdmnt.github.io/",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
 }
-
