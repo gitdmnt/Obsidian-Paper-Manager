@@ -33,7 +33,10 @@ export class SettingTab extends PluginSettingTab {
 							path = v;
 						}
 
-						if (path[path.length - 1] !== "/") {
+						if (
+							path.length !== 0 &&
+							path[path.length - 1] !== "/"
+						) {
 							path += "/";
 						}
 
