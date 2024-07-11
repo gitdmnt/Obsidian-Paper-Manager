@@ -16,14 +16,28 @@ export class SettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Path")
-			.setDesc("Not works now")
+			.setName("Directory Path")
+			.setDesc("")
 			.addText((text) =>
 				text
-					.setPlaceholder("")
+					.setPlaceholder("/")
 					.setValue(this.plugin.settings.path)
-					.onChange(async (value) => {
-						this.plugin.settings.path = value;
+					.onChange(async (v) => {
+						let path = "";
+
+						if (v[0] === "/") {
+							path = v.slice(1);
+						} else if (v.slice(0, 2) === "./") {
+							path = v.slice(2);
+						} else {
+							path = v;
+						}
+
+						if (path[path.length - 1] !== "/") {
+							path += "/";
+						}
+
+						this.plugin.settings.path = path;
 						await this.plugin.saveSettings();
 					})
 			);

@@ -2,6 +2,7 @@ import { App, Plugin } from "obsidian";
 
 import { SettingTab } from "src/setting";
 import { AddNewPaperModal } from "src/modal";
+import { exportBibTeX } from "src/command";
 
 const DEFAULT_SETTINGS: Settings = {
 	path: "/",
@@ -18,11 +19,17 @@ export default class PaperManagerPlugin extends Plugin {
 			"Add new paper",
 			(evt: MouseEvent) => {
 				new AddNewPaperModal(this.app, this.settings, (result) =>
-					createPaperPage(this.app, result)
+					createPaperPage(this.app, this.settings, result)
 				).open();
 			}
 		);
 		this.addSettingTab(new SettingTab(this.app, this));
+
+		this.addCommand({
+			id: "export-bibtex",
+			name: "Export citation as BibTeX",
+			callback: exportBibTeX,
+		});
 	}
 
 	onunload() {}
@@ -40,7 +47,7 @@ export default class PaperManagerPlugin extends Plugin {
 	}
 }
 
-const createPaperPage = (app: App, result: Result) => {
+const createPaperPage = (app: App, settings: Settings, result: Result) => {
 	let frontmatter = `---
 title: "${result.data.title}"
 author: "${result.data.authors}"
@@ -59,8 +66,9 @@ doi: "${result.data.doi}"
 	frontmatter += "\n";
 
 	// ファイルを作る
-	const folder = "paperreview/";
+	const folder = settings.path;
 	const filePath =
 		folder + result.data.title.replaceAll(/[/\\:]/g, "  ") + ".md";
 	app.vault.create(filePath, frontmatter);
+	console.log(`Paper Manager: Create file at ${filePath}`);
 };
