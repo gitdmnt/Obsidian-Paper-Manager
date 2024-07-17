@@ -28,7 +28,7 @@ export default class PaperManagerPlugin extends Plugin {
 		this.addCommand({
 			id: "export-bibtex",
 			name: "Export citation as BibTeX",
-			callback: exportBibTeX,
+			callback: () => exportBibTeX(this.app.vault, this.settings.path),
 		});
 	}
 
