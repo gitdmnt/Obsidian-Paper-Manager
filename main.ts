@@ -1,8 +1,7 @@
-import { App, Plugin } from "obsidian";
+import { Plugin } from "obsidian";
 
 import { SettingTab } from "src/setting";
-import { AddNewPaperModal } from "src/modal";
-import { exportBibTeX } from "src/command";
+import { addNewPaper, exportBibTeX, importBibTeX } from "src/command";
 
 const DEFAULT_SETTINGS: Settings = {
 	path: "/",
@@ -14,14 +13,8 @@ export default class PaperManagerPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.addRibbonIcon(
-			"file-plus-2",
-			"Add new paper",
-			(evt: MouseEvent) => {
-				new AddNewPaperModal(this.app, this.settings, (result) =>
-					createPaperPage(this.app, this.settings, result)
-				).open();
-			}
+		this.addRibbonIcon("file-plus-2", "Add new paper", (evt: MouseEvent) =>
+			addNewPaper(this.app, this.settings)
 		);
 		this.addSettingTab(new SettingTab(this.app, this));
 
@@ -29,6 +22,12 @@ export default class PaperManagerPlugin extends Plugin {
 			id: "export-bibtex",
 			name: "Export citation as BibTeX",
 			callback: () => exportBibTeX(this.app.vault, this.settings.path),
+		});
+
+		this.addCommand({
+			id: "import-bibtex",
+			name: "import BibTeX formatted text",
+			callback: () => importBibTeX(this.app, this.settings.path),
 		});
 	}
 
@@ -46,29 +45,3 @@ export default class PaperManagerPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
-
-const createPaperPage = (app: App, settings: Settings, result: Result) => {
-	let frontmatter = `---
-title: "${result.data.title}"
-author: "${result.data.authors}"
-journal: "${result.data.journal}"
-year: ${result.data.year}
-volume:  ${result.data.volume}
-number:  ${result.data.number}
-pages:  ${result.data.pages}
-doi: "${result.data.doi}"
----
-`;
-	// キーワードをタグに
-	for (const i in result.keywords) {
-		frontmatter += `#${result.keywords[i]} `;
-	}
-	frontmatter += "\n";
-
-	// ファイルを作る
-	const folder = settings.path;
-	const filePath =
-		folder + result.data.title.replaceAll(/[/\\:]/g, "  ") + ".md";
-	app.vault.create(filePath, frontmatter);
-	console.log(`Paper Manager: Create file at ${filePath}`);
-};

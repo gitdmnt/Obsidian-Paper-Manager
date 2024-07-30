@@ -163,3 +163,79 @@ export class AddNewPaperModal extends Modal {
 		contentEl.empty();
 	}
 }
+
+export class BibImportModal extends Modal {
+	result: Result[];
+	onSubmit: (result: Result[]) => void;
+
+	constructor(app: App, onSubmit: (result: Result[]) => void) {
+		super(app);
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen(): void {
+		this.result = [];
+		const { contentEl } = this;
+
+		// Modal title
+		contentEl.createEl("h1", { text: "Import BibTeX" });
+
+		// Details for citation
+		new Setting(contentEl).setName("BibTeX").addTextArea((text) =>
+			text.onChange((value) => {
+				const serializedBibTeX = parseBibFile(value);
+
+				for (const key in serializedBibTeX.entries$) {
+					const entry = serializedBibTeX.getEntry(key);
+
+					const result: Result = {
+						data: {
+							title:
+								normalizeFieldValue(entry?.getField("title"))
+									?.toString()
+									.replaceAll(/[/\\:]/g, "  ") ?? "",
+							authors:
+								normalizeFieldValue(entry?.getField("author"))
+									?.toString()
+									.split(" and ") ?? [],
+							journal:
+								normalizeFieldValue(
+									entry?.getField("journal")
+								)?.toString() ?? "",
+							year: Number(
+								normalizeFieldValue(entry?.getField("year"))
+							),
+							volume: Number(
+								normalizeFieldValue(entry?.getField("volume"))
+							),
+							number: Number(
+								normalizeFieldValue(entry?.getField("number"))
+							),
+							pages: Number(
+								normalizeFieldValue(entry?.getField("pages"))
+							),
+							doi:
+								normalizeFieldValue(
+									entry?.getField("doi")
+								)?.toString() ?? "",
+						},
+						keywords: [],
+					};
+
+					this.result.push(result);
+				}
+			})
+		);
+
+		// Submit button
+		new Setting(contentEl).addButton((btn) =>
+			btn
+				.setButtonText("Create Pages")
+				.setCta()
+				.onClick(() => {
+					this.close();
+					this.onSubmit(this.result);
+				})
+		);
+	}
+}
