@@ -92,7 +92,7 @@ export class AddNewPaperModal extends Modal {
 
 			new Setting(contentEl).setName("Journal Name").addText((text) =>
 				text.onChange((value) => {
-					this.result.data.journal = value;
+					this.result.data.journal = value.replaceAll(" ", "_");
 				})
 			);
 
@@ -101,6 +101,9 @@ export class AddNewPaperModal extends Modal {
 					this.result.data.authors = value
 						.replaceAll("、", ",")
 						.replaceAll(", ", ",")
+						.replaceAll(". ", ".")
+						.replaceAll(".", "_")
+						.replaceAll(" ", "_")
 						.split(",");
 				})
 			);
@@ -142,6 +145,7 @@ export class AddNewPaperModal extends Modal {
 				this.result.keywords = value
 					.replaceAll("、", ",")
 					.replaceAll(", ", ",")
+					.replaceAll(" ", "_")
 					.split(",");
 			})
 		);
