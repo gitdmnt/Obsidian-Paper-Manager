@@ -94,14 +94,18 @@ doi: "${result.data.doi}"
 `;
 	// キーワードをタグに
 	for (const i in result.keywords) {
-		frontmatter += `#${result.keywords[i]} `;
+		frontmatter += `#${result.keywords[i].replaceAll(" ", "_")} `;
 	}
+	frontmatter += "\n";
 	// 筆者もタグに
 	for (const i in result.data.authors) {
-		frontmatter += `#${result.data.authors[i]} `;
+		frontmatter += `#${result.data.authors[i]
+			.replaceAll(". ", "_")
+			.replaceAll(" ", "_")} `;
 	}
+	frontmatter += "\n";
 	// ジャーナル名もタグに
-	frontmatter += `#${result.data.journal}\n`;
+	frontmatter += `#${result.data.journal.replaceAll(" ", "_")}\n`;
 	return frontmatter;
 };
 
