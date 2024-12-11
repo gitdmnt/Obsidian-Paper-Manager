@@ -1,11 +1,11 @@
-import { Plugin } from "obsidian";
+import { Plugin, Notice, TFile } from "obsidian";
 
 import { SettingTab } from "src/setting";
 import { addNewPaper, exportBibTeX, importBibTeX } from "src/command";
+import { dataToFrontmatter } from "src/utils";
 
 const DEFAULT_SETTINGS: Settings = {
 	path: "/",
-	format: "BiBTeX",
 };
 
 export default class PaperManagerPlugin extends Plugin {
@@ -14,7 +14,7 @@ export default class PaperManagerPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addRibbonIcon("file-plus-2", "Add new paper", (evt: MouseEvent) =>
-			addNewPaper(this.app, this.settings)
+			addNewPaper(this.app, (results) => this.onPaperDataSubmit(results))
 		);
 		this.addSettingTab(new SettingTab(this.app, this));
 
@@ -27,7 +27,10 @@ export default class PaperManagerPlugin extends Plugin {
 		this.addCommand({
 			id: "import-bibtex",
 			name: "import BibTeX formatted text",
-			callback: () => importBibTeX(this.app, this.settings.path),
+			callback: async () =>
+				importBibTeX(this.app, (results) =>
+					this.onPaperDataSubmit(results)
+				),
 		});
 	}
 
@@ -43,5 +46,43 @@ export default class PaperManagerPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	async onPaperDataSubmit(results: PaperData[]) {
+		// Iterate over each entry and create a new file
+		results.forEach(async (entry) => {
+			await this.createFile(entry);
+			this.openFileByName(entry.title);
+		});
+	}
+
+	async createFile(entry: PaperData) {
+		const frontmatter = dataToFrontmatter(entry);
+		await this.app.vault.create(
+			`${this.settings.path}${entry.title.replaceAll(
+				/[/\\:\s]/g,
+				"_"
+			)}.md`,
+			frontmatter
+		);
+	}
+
+	async openFileByName(fileName: string) {
+		const path = `${this.settings.path}${fileName.replaceAll(
+			/[/\\:\s]/g,
+			"_"
+		)}.md`;
+		const file = this.app.vault.getAbstractFileByPath(path);
+
+		if (!file) {
+			new Notice(`File "${path}" not found`);
+			return;
+		}
+
+		if (file instanceof TFile) {
+			await this.app.workspace.getLeaf().openFile(file);
+		} else {
+			new Notice(`"${path}" is not a valid file`);
+		}
 	}
 }

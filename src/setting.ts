@@ -44,19 +44,5 @@ export class SettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
-
-		new Setting(containerEl)
-			.setName("Input Method")
-			.setDesc("Select how you input paper information.")
-			.addDropdown((c) =>
-				c
-					.addOption("BiBTeX", "BiBTeX")
-					.addOption("Direct Input", "Direct Input")
-					.setValue(this.plugin.settings.format)
-					.onChange(async (value: "BiBTeX" | "Direct Input") => {
-						this.plugin.settings.format = value;
-						await this.plugin.saveSettings();
-					})
-			);
 	}
 }

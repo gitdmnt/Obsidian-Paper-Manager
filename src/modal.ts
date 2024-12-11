@@ -3,145 +3,90 @@ import { App, Modal, Setting } from "obsidian";
 import { parseBibFile, normalizeFieldValue } from "bibtex";
 
 export class AddNewPaperModal extends Modal {
-	result: Result;
-	setting: Settings;
-	onSubmit: (result: Result) => void;
+	results: PaperData[];
+	onSubmit: (results: PaperData[]) => void;
 
-	constructor(
-		app: App,
-		setting: Settings,
-		onSubmit: (result: Result) => void
-	) {
+	constructor(app: App, onSubmit: (results: PaperData[]) => void) {
 		super(app);
 		this.onSubmit = onSubmit;
-		this.setting = setting;
+		this.results = [];
 	}
 
 	onOpen() {
-		this.result = {
-			data: {
-				title: "",
-				journal: "",
-				authors: [],
-				year: 0,
-				volume: 0,
-				number: 0,
-				pages: 0,
-				doi: "",
-			},
-			keywords: [],
-		};
 		const { contentEl } = this;
 
 		// Modal title
 		contentEl.createEl("h1", { text: "Input Paper Data" });
 
-		// Details for citation
-		if (this.setting.format === "BiBTeX") {
-			new Setting(contentEl).setName("BibTeX").addTextArea((text) =>
-				text.onChange((value) => {
-					const serializedBibTeX = parseBibFile(value);
+		this.results.push({
+			title: "",
+			authors: [],
+			journal: "",
+			year: 0,
+			volume: 0,
+			number: 0,
+			pages: 0,
+			doi: "",
+			keywords: [],
+		});
 
-					for (const key in serializedBibTeX.entries$) {
-						const entry = serializedBibTeX.getEntry(key);
+		new Setting(contentEl).setName("Title").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].title = value.replaceAll(/[/\\:]/g, "  ");
+			})
+		);
 
-						this.result.data.title =
-							normalizeFieldValue(entry?.getField("title"))
-								?.toString()
-								.replaceAll(/[/\\:]/g, "  ") ?? "";
+		new Setting(contentEl).setName("Journal Name").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].journal = value;
+			})
+		);
 
-						this.result.data.authors =
-							normalizeFieldValue(entry?.getField("author"))
-								?.toString()
-								.split(" and ") ?? [];
+		new Setting(contentEl).setName("Authors").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].authors = value
+					.replaceAll("、", ",")
+					.replaceAll(", ", ",")
+					.replaceAll(". ", ".")
+					.replaceAll(".", ". ")
+					.split(",");
+			})
+		);
 
-						this.result.data.journal =
-							normalizeFieldValue(
-								entry?.getField("journal")
-							)?.toString() ?? "";
+		new Setting(contentEl).setName("Published Year").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].year = Number(value);
+			})
+		);
 
-						this.result.data.year = Number(
-							normalizeFieldValue(entry?.getField("year"))
-						);
+		new Setting(contentEl).setName("Volume").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].volume = Number(value);
+			})
+		);
 
-						this.result.data.volume = Number(
-							normalizeFieldValue(entry?.getField("volume"))
-						);
+		new Setting(contentEl).setName("Number").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].number = Number(value);
+			})
+		);
 
-						this.result.data.number = Number(
-							normalizeFieldValue(entry?.getField("number"))
-						);
+		new Setting(contentEl).setName("Pages").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].pages = Number(value);
+			})
+		);
 
-						this.result.data.pages = Number(
-							normalizeFieldValue(entry?.getField("pages"))
-						);
-
-						this.result.data.journal =
-							normalizeFieldValue(
-								entry?.getField("doi")
-							)?.toString() ?? "";
-					}
-				})
-			);
-		} else if (this.setting.format === "Direct Input") {
-			new Setting(contentEl).setName("Title").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.title = value.replaceAll(/[/\\:]/g, "  ");
-				})
-			);
-
-			new Setting(contentEl).setName("Journal Name").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.journal = value;
-				})
-			);
-
-			new Setting(contentEl).setName("Authors").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.authors = value
-						.replaceAll("、", ",")
-						.replaceAll(", ", ",")
-						.replaceAll(". ", ".")
-						.replaceAll(".", ". ")
-						.split(",");
-				})
-			);
-
-			new Setting(contentEl).setName("Published Year").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.year = Number(value);
-				})
-			);
-
-			new Setting(contentEl).setName("Volume").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.volume = Number(value);
-				})
-			);
-
-			new Setting(contentEl).setName("Number").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.number = Number(value);
-				})
-			);
-
-			new Setting(contentEl).setName("Pages").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.pages = Number(value);
-				})
-			);
-
-			new Setting(contentEl).setName("DOI").addText((text) =>
-				text.onChange((value) => {
-					this.result.data.doi = value;
-				})
-			);
-		}
+		new Setting(contentEl).setName("DOI").addText((text) =>
+			text.onChange((value) => {
+				this.results[0].doi = value;
+			})
+		);
 
 		// Keywords of the paper
 		new Setting(contentEl).setName("Keywords").addText((text) =>
 			text.onChange((value) => {
-				this.result.keywords = value
+				this.results[0].keywords = value
 					.replaceAll("、", ",")
 					.replaceAll(", ", ",")
 					.split(",");
@@ -155,7 +100,7 @@ export class AddNewPaperModal extends Modal {
 				.setCta()
 				.onClick(() => {
 					this.close();
-					this.onSubmit(this.result);
+					this.onSubmit(this.results);
 				})
 		);
 	}
@@ -167,16 +112,16 @@ export class AddNewPaperModal extends Modal {
 }
 
 export class BibImportModal extends Modal {
-	result: Result[];
-	onSubmit: (result: Result[]) => void;
+	results: PaperData[];
+	onSubmit: (results: PaperData[]) => void;
 
-	constructor(app: App, onSubmit: (result: Result[]) => void) {
+	constructor(app: App, onSubmit: (result: PaperData[]) => void) {
 		super(app);
 		this.onSubmit = onSubmit;
 	}
 
 	onOpen(): void {
-		this.result = [];
+		this.results = [];
 		const { contentEl } = this;
 
 		// Modal title
@@ -190,41 +135,39 @@ export class BibImportModal extends Modal {
 				for (const key in serializedBibTeX.entries$) {
 					const entry = serializedBibTeX.getEntry(key);
 
-					const result: Result = {
-						data: {
-							title:
-								normalizeFieldValue(entry?.getField("title"))
-									?.toString()
-									.replaceAll(/[/\\:]/g, "  ") ?? "",
-							authors:
-								normalizeFieldValue(entry?.getField("author"))
-									?.toString()
-									.split(" and ") ?? [],
-							journal:
-								normalizeFieldValue(
-									entry?.getField("journal")
-								)?.toString() ?? "",
-							year: Number(
-								normalizeFieldValue(entry?.getField("year"))
-							),
-							volume: Number(
-								normalizeFieldValue(entry?.getField("volume"))
-							),
-							number: Number(
-								normalizeFieldValue(entry?.getField("number"))
-							),
-							pages: Number(
-								normalizeFieldValue(entry?.getField("pages"))
-							),
-							doi:
-								normalizeFieldValue(
-									entry?.getField("doi")
-								)?.toString() ?? "",
-						},
+					const result: PaperData = {
+						title:
+							normalizeFieldValue(entry?.getField("title"))
+								?.toString()
+								.replaceAll(/[/\\:]/g, "  ") ?? "",
+						authors:
+							normalizeFieldValue(entry?.getField("author"))
+								?.toString()
+								.split(" and ") ?? [],
+						journal:
+							normalizeFieldValue(
+								entry?.getField("journal")
+							)?.toString() ?? "",
+						year: Number(
+							normalizeFieldValue(entry?.getField("year"))
+						),
+						volume: Number(
+							normalizeFieldValue(entry?.getField("volume"))
+						),
+						number: Number(
+							normalizeFieldValue(entry?.getField("number"))
+						),
+						pages: Number(
+							normalizeFieldValue(entry?.getField("pages"))
+						),
+						doi:
+							normalizeFieldValue(
+								entry?.getField("doi")
+							)?.toString() ?? "",
 						keywords: [],
 					};
 
-					this.result.push(result);
+					this.results.push(result);
 				}
 			})
 		);
@@ -236,7 +179,7 @@ export class BibImportModal extends Modal {
 				.setCta()
 				.onClick(() => {
 					this.close();
-					this.onSubmit(this.result);
+					this.onSubmit(this.results);
 				})
 		);
 	}
