@@ -60,3 +60,23 @@ doi: "${result.doi}"
 	frontmatter += `#${result.journal.replaceAll(" ", "_")}\n`;
 	return frontmatter;
 };
+
+export const validateFolder = (path: string) => {
+	let validated = "";
+
+	// Remove leading slash
+	if (path[0] === "/") {
+		validated = path.slice(1);
+	} else if (path.slice(0, 2) === "./") {
+		validated = path.slice(2);
+	} else {
+		validated = path;
+	}
+
+	// add trailing slash
+	if (validated.length !== 0 && validated[validated.length - 1] !== "/") {
+		validated += "/";
+	}
+
+	return validated;
+};

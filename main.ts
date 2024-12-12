@@ -1,4 +1,4 @@
-import { Plugin, Notice, TFile } from "obsidian";
+import { Plugin, Notice, TFile, TFolder } from "obsidian";
 
 import { SettingTab } from "src/setting";
 import { addNewPaper, exportBibTeX, importBibTeX } from "src/command";
@@ -14,7 +14,9 @@ export default class PaperManagerPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addRibbonIcon("file-plus-2", "Add new paper", (evt: MouseEvent) =>
-			addNewPaper(this.app, (results) => this.onPaperDataSubmit(results))
+			addNewPaper(this.app, this.settings, (results, path) =>
+				this.onPaperDataSubmit(results, path)
+			)
 		);
 		this.addSettingTab(new SettingTab(this.app, this));
 
@@ -48,18 +50,18 @@ export default class PaperManagerPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async onPaperDataSubmit(results: PaperData[]) {
+	async onPaperDataSubmit(results: PaperData[], path?: string | null) {
 		// Iterate over each entry and create a new file
 		results.forEach(async (entry) => {
-			await this.createFile(entry);
-			this.openFileByName(entry.title);
+			await this.createFile(entry, path);
+			this.openFileByName(entry.title, path);
 		});
 	}
 
-	async createFile(entry: PaperData) {
+	async createFile(entry: PaperData, path?: string | null) {
 		const frontmatter = dataToFrontmatter(entry);
 		await this.app.vault.create(
-			`${this.settings.path}${entry.title.replaceAll(
+			`${path ?? this.settings.path}${entry.title.replaceAll(
 				/[/\\:\s]/g,
 				"_"
 			)}.md`,
@@ -67,22 +69,29 @@ export default class PaperManagerPlugin extends Plugin {
 		);
 	}
 
-	async openFileByName(fileName: string) {
-		const path = `${this.settings.path}${fileName.replaceAll(
+	async openFileByName(fileName: string, path?: string | null) {
+		const filePath = `${path ?? this.settings.path}${fileName.replaceAll(
 			/[/\\:\s]/g,
 			"_"
 		)}.md`;
-		const file = this.app.vault.getAbstractFileByPath(path);
+		const file = this.app.vault.getAbstractFileByPath(filePath);
 
 		if (!file) {
-			new Notice(`File "${path}" not found`);
+			new Notice(`File "${filePath}" not found`);
 			return;
 		}
 
 		if (file instanceof TFile) {
 			await this.app.workspace.getLeaf().openFile(file);
 		} else {
-			new Notice(`"${path}" is not a valid file`);
+			new Notice(`"${filePath}" is not a valid file`);
 		}
+	}
+
+	childrenDirectory(): TFolder[] {
+		const children = this.app.vault.getAllFolders(false).filter((f) => {
+			f.parent?.path === this.settings.path;
+		});
+		return children;
 	}
 }

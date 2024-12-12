@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { validateFolder } from "./utils";
 
 import PaperManagerPlugin from "main";
 
@@ -15,34 +16,18 @@ export class SettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		const children = this.app.vault.getAllFolders().map((f) => f.path);
+
 		new Setting(containerEl)
 			.setName("Directory Path")
 			.setDesc("")
-			.addText((text) =>
-				text
-					.setPlaceholder("/")
-					.setValue(this.plugin.settings.path)
-					.onChange(async (v) => {
-						let path = "";
-
-						if (v[0] === "/") {
-							path = v.slice(1);
-						} else if (v.slice(0, 2) === "./") {
-							path = v.slice(2);
-						} else {
-							path = v;
-						}
-
-						if (
-							path.length !== 0 &&
-							path[path.length - 1] !== "/"
-						) {
-							path += "/";
-						}
-
-						this.plugin.settings.path = path;
-						await this.plugin.saveSettings();
-					})
-			);
+			.addDropdown((dropdown) => {
+				children.forEach((c) => dropdown.addOption(c, c));
+				dropdown.onChange(async (v) => {
+					this.plugin.settings.path = validateFolder(v);
+					await this.plugin.saveSettings();
+				});
+				dropdown.setValue(this.plugin.settings.path);
+			});
 	}
 }

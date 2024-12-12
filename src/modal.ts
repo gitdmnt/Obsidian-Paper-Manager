@@ -1,15 +1,24 @@
 import { App, Modal, Setting } from "obsidian";
 
 import { parseBibFile, normalizeFieldValue } from "bibtex";
+import { validateFolder } from "./utils";
 
 export class AddNewPaperModal extends Modal {
 	results: PaperData[];
-	onSubmit: (results: PaperData[]) => void;
+	settings: Settings;
+	path: string;
+	onSubmit: (results: PaperData[], path: string) => void;
 
-	constructor(app: App, onSubmit: (results: PaperData[]) => void) {
+	constructor(
+		app: App,
+		settings: Settings,
+		onSubmit: (results: PaperData[], path: string) => void
+	) {
 		super(app);
 		this.onSubmit = onSubmit;
 		this.results = [];
+		this.settings = settings;
+		this.path = settings.path;
 	}
 
 	onOpen() {
@@ -93,6 +102,20 @@ export class AddNewPaperModal extends Modal {
 			})
 		);
 
+		// get path from settings
+
+		new Setting(contentEl).setName("directory").addDropdown((dropdown) => {
+			dropdown.addOption(this.settings.path, this.settings.path);
+			const children = this.app.vault
+				.getAllFolders(false)
+				.filter((f) => f.parent?.path + "/" === this.settings.path)
+				.map((f) => validateFolder(f.path));
+			children.forEach((c) => dropdown.addOption(c, c));
+			dropdown.onChange((v) => {
+				this.path = v;
+			});
+		});
+
 		// Submit button
 		new Setting(contentEl).addButton((btn) =>
 			btn
@@ -100,7 +123,7 @@ export class AddNewPaperModal extends Modal {
 				.setCta()
 				.onClick(() => {
 					this.close();
-					this.onSubmit(this.results);
+					this.onSubmit(this.results, this.path);
 				})
 		);
 	}

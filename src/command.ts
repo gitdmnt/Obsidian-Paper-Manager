@@ -39,7 +39,8 @@ export const importBibTeX = async (
 // Create a new file with the specified paper information
 export const addNewPaper = async (
 	app: App,
-	onSubmit: (result: PaperData[]) => void
+	settings: Settings,
+	onSubmit: (result: PaperData[], path: string) => void
 ) => {
-	new AddNewPaperModal(app, onSubmit).open();
+	new AddNewPaperModal(app, settings, onSubmit).open();
 };
