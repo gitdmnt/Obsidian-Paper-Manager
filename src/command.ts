@@ -31,9 +31,10 @@ export const exportBibTeX = async (vault: Vault, path: string) => {
 // Import the BibTeX file and create a new file for each entry
 export const importBibTeX = async (
 	app: App,
-	onSubmit: (result: PaperData[]) => void
+	settings: Settings,
+	onSubmit: (result: PaperData[], path: string) => void
 ) => {
-	new BibImportModal(app, onSubmit).open();
+	new BibImportModal(app, settings, onSubmit).open();
 };
 
 // Create a new file with the specified paper information

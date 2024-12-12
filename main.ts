@@ -13,7 +13,7 @@ export default class PaperManagerPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.addRibbonIcon("file-plus-2", "Add new paper", (evt: MouseEvent) =>
+		this.addRibbonIcon("file-plus-2", "Add new paper", (_: MouseEvent) =>
 			addNewPaper(this.app, this.settings, (results, path) =>
 				this.onPaperDataSubmit(results, path)
 			)
@@ -27,11 +27,20 @@ export default class PaperManagerPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "add-new-paper",
+			name: "Add new paper",
+			callback: () =>
+				addNewPaper(this.app, this.settings, (results, path) =>
+					this.onPaperDataSubmit(results, path)
+				),
+		});
+
+		this.addCommand({
 			id: "import-bibtex",
 			name: "import BibTeX formatted text",
 			callback: async () =>
-				importBibTeX(this.app, (results) =>
-					this.onPaperDataSubmit(results)
+				importBibTeX(this.app, this.settings, (results, path) =>
+					this.onPaperDataSubmit(results, path)
 				),
 		});
 	}

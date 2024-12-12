@@ -136,10 +136,19 @@ export class AddNewPaperModal extends Modal {
 
 export class BibImportModal extends Modal {
 	results: PaperData[];
-	onSubmit: (results: PaperData[]) => void;
+	settings: Settings;
+	path: string;
+	onSubmit: (results: PaperData[], path: string) => void;
 
-	constructor(app: App, onSubmit: (result: PaperData[]) => void) {
+	constructor(
+		app: App,
+		settings: Settings,
+		onSubmit: (results: PaperData[], path: string) => void
+	) {
 		super(app);
+		this.results = [];
+		this.settings = settings;
+		this.path = settings.path;
 		this.onSubmit = onSubmit;
 	}
 
@@ -195,6 +204,18 @@ export class BibImportModal extends Modal {
 			})
 		);
 
+		new Setting(contentEl).setName("directory").addDropdown((dropdown) => {
+			dropdown.addOption(this.settings.path, this.settings.path);
+			const children = this.app.vault
+				.getAllFolders(false)
+				.filter((f) => f.parent?.path + "/" === this.settings.path)
+				.map((f) => validateFolder(f.path));
+			children.forEach((c) => dropdown.addOption(c, c));
+			dropdown.onChange((v) => {
+				this.path = v;
+			});
+		});
+
 		// Submit button
 		new Setting(contentEl).addButton((btn) =>
 			btn
@@ -202,7 +223,7 @@ export class BibImportModal extends Modal {
 				.setCta()
 				.onClick(() => {
 					this.close();
-					this.onSubmit(this.results);
+					this.onSubmit(this.results, this.path);
 				})
 		);
 	}
